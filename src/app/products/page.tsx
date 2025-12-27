@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import Layout from '@/components/Layout';
 import { formatCurrency, generateBarcodeId } from '@/lib/utils';
-import { Plus, Edit, Trash2, Search, Save, X, Download, Printer } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, Save, X, Download, Printer, QrCode, Package } from 'lucide-react';
 import type { Product } from '@/lib/db';
 
 export default function ProductsPage() {
@@ -56,15 +56,12 @@ export default function ProductsPage() {
     canvas.width = size;
     canvas.height = size;
 
-    // Simple QR-like pattern (for demo - in production use a real QR library)
     const qrSize = 25;
     const cellSize = size / qrSize;
 
-    // White background
     ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(0, 0, size, size);
 
-    // Generate pattern based on text
     ctx.fillStyle = '#000000';
     for (let i = 0; i < qrSize; i++) {
       for (let j = 0; j < qrSize; j++) {
@@ -75,7 +72,6 @@ export default function ProductsPage() {
       }
     }
 
-    // Finder patterns (corners)
     const drawFinderPattern = (x: number, y: number) => {
       ctx.fillStyle = '#000000';
       ctx.fillRect(x * cellSize, y * cellSize, 7 * cellSize, 7 * cellSize);
@@ -202,56 +198,64 @@ export default function ProductsPage() {
 
   return (
     <Layout>
-      <div className="p-8">
-        {/* Header with tabs */}
-        <div className="bg-white rounded-xl shadow-lg mb-6">
-          <div className="flex items-center border-b">
+      <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Kelola Produk</h1>
+          <p className="text-gray-600">Tambah, edit, dan kelola produk kantin</p>
+        </div>
+
+        {/* Tabs */}
+        <div className="bg-white rounded-xl border border-gray-200 mb-6">
+          <div className="flex border-b border-gray-200">
             <button
               onClick={() => {
                 resetForm();
                 setActiveTab('add');
               }}
-              className={`px-6 py-4 font-semibold flex items-center gap-2 border-b-2 transition-colors ${
+              className={`flex-1 sm:flex-none px-6 py-4 font-semibold flex items-center justify-center gap-2 border-b-2 transition-all ${
                 activeTab === 'add'
-                  ? 'text-blue-600 border-blue-600'
-                  : 'text-gray-500 hover:text-gray-700 border-transparent'
+                  ? 'text-blue-600 border-blue-600 bg-blue-50'
+                  : 'text-gray-500 hover:text-gray-700 border-transparent hover:bg-gray-50'
               }`}
             >
               <Plus size={20} />
-              Tambah
+              <span className="hidden sm:inline">Tambah</span>
             </button>
             <button
               onClick={() => setActiveTab('list')}
-              className={`px-6 py-4 font-semibold flex items-center gap-2 border-b-2 transition-colors ${
+              className={`flex-1 sm:flex-none px-6 py-4 font-semibold flex items-center justify-center gap-2 border-b-2 transition-all ${
                 activeTab === 'list'
-                  ? 'text-blue-600 border-blue-600'
-                  : 'text-gray-500 hover:text-gray-700 border-transparent'
+                  ? 'text-blue-600 border-blue-600 bg-blue-50'
+                  : 'text-gray-500 hover:text-gray-700 border-transparent hover:bg-gray-50'
               }`}
             >
-              📄 Lihat Data
+              <Package size={20} />
+              <span className="hidden sm:inline">Daftar</span>
             </button>
             <button
               onClick={() => setActiveTab('generate')}
-              className={`px-6 py-4 font-semibold flex items-center gap-2 border-b-2 transition-colors ${
+              className={`flex-1 sm:flex-none px-6 py-4 font-semibold flex items-center justify-center gap-2 border-b-2 transition-all ${
                 activeTab === 'generate'
-                  ? 'text-blue-600 border-blue-600'
-                  : 'text-gray-500 hover:text-gray-700 border-transparent'
+                  ? 'text-blue-600 border-blue-600 bg-blue-50'
+                  : 'text-gray-500 hover:text-gray-700 border-transparent hover:bg-gray-50'
               }`}
             >
-              🏷️ Generate Barcode
+              <QrCode size={20} />
+              <span className="hidden sm:inline">QR Code</span>
             </button>
           </div>
         </div>
 
         {/* Add/Edit Form */}
         {activeTab === 'add' && (
-          <div className="bg-white rounded-xl shadow-lg p-8 animate-fade-in">
+          <div className="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 animate-fade-in">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">
               {editId ? 'Edit Produk' : 'Tambah Produk Baru'}
             </h2>
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Barcode ID <span className="text-red-500">*</span>
@@ -261,38 +265,25 @@ export default function ProductsPage() {
                     value={form.barcode_id}
                     onChange={(e) => setForm({ ...form, barcode_id: e.target.value.toUpperCase() })}
                     placeholder="BRK001"
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono transition-all"
                     required
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Stok Awal <span className="text-red-500">*</span>
+                    Kategori <span className="text-red-500">*</span>
                   </label>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setForm({ ...form, stok: Math.max(0, form.stok - 1) })}
-                      className="px-4 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-bold"
-                    >
-                      −
-                    </button>
-                    <input
-                      type="number"
-                      value={form.stok}
-                      onChange={(e) => setForm({ ...form, stok: parseInt(e.target.value) || 0 })}
-                      className="flex-1 px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-center font-semibold"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setForm({ ...form, stok: form.stok + 1 })}
-                      className="px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold"
-                    >
-                      +
-                    </button>
-                  </div>
+                  <select
+                    value={form.kategori}
+                    onChange={(e) => setForm({ ...form, kategori: e.target.value })}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  >
+                    <option value="Makanan">Makanan</option>
+                    <option value="Minuman">Minuman</option>
+                    <option value="Snack">Snack</option>
+                    <option value="Alat Tulis">Alat Tulis</option>
+                  </select>
                 </div>
               </div>
 
@@ -305,106 +296,71 @@ export default function ProductsPage() {
                   value={form.nama_produk}
                   onChange={(e) => setForm({ ...form, nama_produk: e.target.value })}
                   placeholder="Aqua 600ml"
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   required
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Stok Awal <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    value={form.stok}
+                    onChange={(e) => setForm({ ...form, stok: parseInt(e.target.value) || 0 })}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center font-semibold transition-all"
+                    required
+                  />
+                </div>
+
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Harga Modal (Rp) <span className="text-red-500">*</span>
                   </label>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setForm({ ...form, harga_modal: Math.max(0, form.harga_modal - 100) })}
-                      className="px-4 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-bold"
-                    >
-                      −
-                    </button>
-                    <input
-                      type="number"
-                      value={form.harga_modal}
-                      onChange={(e) => setForm({ ...form, harga_modal: parseInt(e.target.value) || 0 })}
-                      placeholder="0"
-                      className="flex-1 px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-center font-semibold"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setForm({ ...form, harga_modal: form.harga_modal + 100 })}
-                      className="px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold"
-                    >
-                      +
-                    </button>
-                  </div>
+                  <input
+                    type="number"
+                    value={form.harga_modal}
+                    onChange={(e) => setForm({ ...form, harga_modal: parseInt(e.target.value) || 0 })}
+                    placeholder="0"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center font-semibold transition-all"
+                    required
+                  />
                 </div>
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Harga Jual (Rp) <span className="text-red-500">*</span>
                   </label>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setForm({ ...form, harga_jual: Math.max(0, form.harga_jual - 100) })}
-                      className="px-4 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-bold"
-                    >
-                      −
-                    </button>
-                    <input
-                      type="number"
-                      value={form.harga_jual}
-                      onChange={(e) => setForm({ ...form, harga_jual: parseInt(e.target.value) || 0 })}
-                      placeholder="0"
-                      className="flex-1 px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-center font-semibold"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setForm({ ...form, harga_jual: form.harga_jual + 100 })}
-                      className="px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold"
-                    >
-                      +
-                    </button>
-                  </div>
+                  <input
+                    type="number"
+                    value={form.harga_jual}
+                    onChange={(e) => setForm({ ...form, harga_jual: parseInt(e.target.value) || 0 })}
+                    placeholder="0"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center font-semibold transition-all"
+                    required
+                  />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Kategori <span className="text-red-500">*</span>
-                </label>
-                <select
-                  value={form.kategori}
-                  onChange={(e) => setForm({ ...form, kategori: e.target.value })}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="Makanan">Makanan</option>
-                  <option value="Minuman">Minuman</option>
-                  <option value="Snack">Snack</option>
-                  <option value="Alat Tulis">Alat Tulis</option>
-                </select>
-              </div>
-
-              <div className="flex gap-3 pt-4">
+              <div className="flex flex-col sm:flex-row gap-3 pt-4">
                 <button
                   type="button"
                   onClick={() => {
                     setActiveTab('list');
                     setEditId(null);
                   }}
-                  className="flex-1 px-6 py-4 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold transition-colors"
+                  className="flex-1 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold transition-all"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-6 py-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
+                  className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:shadow-lg text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
                 >
                   <Save size={20} />
-                  💾 Simpan Produk
+                  Simpan Produk
                 </button>
               </div>
             </form>
@@ -413,8 +369,9 @@ export default function ProductsPage() {
 
         {/* Product List */}
         {activeTab === 'list' && (
-          <div className="animate-fade-in">
-            <div className="bg-white rounded-xl shadow-lg p-4 mb-6">
+          <div className="animate-fade-in space-y-4">
+            {/* Search */}
+            <div className="bg-white rounded-xl border border-gray-200 p-4">
               <div className="relative">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                 <input
@@ -422,100 +379,117 @@ export default function ProductsPage() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Cari produk atau barcode..."
-                  className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 />
               </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-              <table className="min-w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left">
-                      <input
-                        type="checkbox"
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedProducts(filtered.map(p => p.id));
-                          } else {
-                            setSelectedProducts([]);
-                          }
-                        }}
-                        checked={selectedProducts.length === filtered.length && filtered.length > 0}
-                        className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
-                      />
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Barcode</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Nama</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Kategori</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Stok</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Harga</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {filtered.map((product) => (
-                    <tr key={product.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4">
+            {/* Table */}
+            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left">
                         <input
                           type="checkbox"
-                          checked={selectedProducts.includes(product.id)}
-                          onChange={() => toggleProductSelection(product.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedProducts(filtered.map(p => p.id));
+                            } else {
+                              setSelectedProducts([]);
+                            }
+                          }}
+                          checked={selectedProducts.length === filtered.length && filtered.length > 0}
                           className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
                         />
-                      </td>
-                      <td className="px-6 py-4 text-sm font-mono">{product.barcode_id}</td>
-                      <td className="px-6 py-4 text-sm font-medium">{product.nama_produk}</td>
-                      <td className="px-6 py-4">
-                        <span className="px-2 py-1 text-xs font-semibold bg-blue-100 text-blue-800 rounded-full">
-                          {product.kategori}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span
-                          className={`px-2 py-1 text-xs font-bold rounded-full ${
-                            product.stok === 0
-                              ? 'bg-red-100 text-red-800'
-                              : product.stok < 10
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : 'bg-green-100 text-green-800'
-                          }`}
-                        >
-                          {product.stok}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm font-semibold">{formatCurrency(product.harga_jual)}</td>
-                      <td className="px-6 py-4">
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleEdit(product)}
-                            className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
-                          >
-                            <Edit size={18} />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(product.id)}
-                            className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        </div>
-                      </td>
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Barcode</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Nama</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Kategori</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Stok</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Harga</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Aksi</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {filtered.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="px-6 py-12 text-center">
+                          <div className="text-gray-400 mb-2">
+                            <Package size={48} className="mx-auto mb-2 opacity-50" />
+                            <p>Tidak ada produk</p>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : (
+                      filtered.map((product) => (
+                        <tr key={product.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-6 py-4">
+                            <input
+                              type="checkbox"
+                              checked={selectedProducts.includes(product.id)}
+                              onChange={() => toggleProductSelection(product.id)}
+                              className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                            />
+                          </td>
+                          <td className="px-6 py-4 text-sm font-mono text-gray-900">{product.barcode_id}</td>
+                          <td className="px-6 py-4 text-sm font-medium text-gray-900">{product.nama_produk}</td>
+                          <td className="px-6 py-4">
+                            <span className="px-3 py-1 text-xs font-semibold bg-blue-50 text-blue-700 rounded-full">
+                              {product.kategori}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span
+                              className={`px-3 py-1 text-xs font-bold rounded-full ${
+                                product.stok === 0
+                                  ? 'bg-red-50 text-red-700'
+                                  : product.stok < 10
+                                  ? 'bg-yellow-50 text-yellow-700'
+                                  : 'bg-green-50 text-green-700'
+                              }`}
+                            >
+                              {product.stok}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-sm font-semibold text-gray-900">{formatCurrency(product.harga_jual)}</td>
+                          <td className="px-6 py-4">
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleEdit(product)}
+                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                title="Edit"
+                              >
+                                <Edit size={18} />
+                              </button>
+                              <button
+                                onClick={() => handleDelete(product.id)}
+                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                title="Hapus"
+                              >
+                                <Trash2 size={18} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             {selectedProducts.length > 0 && (
-              <div className="mt-4 bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-center justify-between">
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
                 <span className="text-blue-900 font-semibold">
                   {selectedProducts.length} produk dipilih
                 </span>
                 <button
                   onClick={() => setActiveTab('generate')}
-                  className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
+                  className="w-full sm:w-auto px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
                 >
+                  <QrCode size={18} />
                   Generate QR Code
                 </button>
               </div>
@@ -523,59 +497,58 @@ export default function ProductsPage() {
           </div>
         )}
 
-        {/* Generate Barcode */}
+        {/* Generate QR Code */}
         {activeTab === 'generate' && (
           <div className="animate-fade-in">
-            <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
-              <div className="flex justify-between items-center mb-6">
+            <div className="bg-white rounded-xl border border-gray-200 p-6 sm:p-8">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900">Generate QR Code</h2>
                   <p className="text-gray-600 mt-1">{selectedProducts.length} produk dipilih</p>
                 </div>
-                <div className="flex gap-3">
+                {selectedProducts.length > 0 && (
                   <button
                     onClick={printQRCodes}
-                    disabled={selectedProducts.length === 0}
-                    className="px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-semibold rounded-lg transition-colors flex items-center gap-2"
+                    className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:shadow-lg text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
                   >
                     <Printer size={20} />
                     Print Semua
                   </button>
-                </div>
+                )}
               </div>
 
               {selectedProducts.length === 0 ? (
                 <div className="text-center py-12">
-                  <div className="text-6xl mb-4">🏷️</div>
+                  <QrCode size={64} className="mx-auto mb-4 text-gray-300" />
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">Belum Ada Produk Dipilih</h3>
-                  <p className="text-gray-600 mb-4">Pilih produk dari tab "Lihat Data" untuk generate QR code</p>
+                  <p className="text-gray-600 mb-6">Pilih produk dari tab "Daftar" untuk generate QR code</p>
                   <button
                     onClick={() => setActiveTab('list')}
-                    className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
+                    className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors"
                   >
                     Pilih Produk
                   </button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {selectedProducts.map(productId => {
                     const product = products.find(p => p.id === productId);
                     if (!product) return null;
 
                     return (
-                      <div key={productId} className="bg-gray-50 rounded-xl p-6 text-center">
+                      <div key={productId} className="bg-gray-50 rounded-xl border border-gray-200 p-6 text-center hover:shadow-md transition-shadow">
                         <canvas
                           ref={el => {
                             qrCanvasRefs.current[productId] = el;
                           }}
-                          className="mx-auto mb-4 border-4 border-white shadow-lg rounded-lg"
+                          className="mx-auto mb-4 border-2 border-white shadow-md rounded-lg"
                         />
                         <h3 className="font-bold text-lg text-gray-900 mb-1">{product.nama_produk}</h3>
                         <p className="text-sm font-mono text-gray-600 mb-2">{product.barcode_id}</p>
                         <p className="text-xl font-bold text-blue-600 mb-4">{formatCurrency(product.harga_jual)}</p>
                         <button
                           onClick={() => downloadQRCode(productId)}
-                          className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
+                          className="w-full px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
                         >
                           <Download size={18} />
                           Download
