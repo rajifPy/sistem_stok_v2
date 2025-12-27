@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Home, Package, Camera, FileText, LogOut, Menu, X } from 'lucide-react';
+import { Home, Package, Camera, FileText, LogOut, Menu, X, BarChart3 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 const navItems = [
@@ -10,6 +10,7 @@ const navItems = [
   { href: '/products', label: 'Produk', icon: Package },
   { href: '/scan', label: 'Scan', icon: Camera },
   { href: '/transactions', label: 'Transaksi', icon: FileText },
+  { href: '/reports', label: 'Laporan', icon: BarChart3 },
 ];
 
 export default function Layout({ children }: { children: React.ReactNode }) {
