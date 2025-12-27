@@ -35,9 +35,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const productData = {
+      barcode_id: String(barcode_id),
+      nama_produk: String(nama_produk),
+      kategori: String(kategori),
+      stok: Number(stok),
+      harga_modal: Number(harga_modal),
+      harga_jual: Number(harga_jual),
+    };
+
     const { data, error } = await supabase
       .from('products')
-      .insert([{ barcode_id, nama_produk, kategori, stok, harga_modal, harga_jual }])
+      .insert([productData])
       .select()
       .single();
 
@@ -62,9 +71,17 @@ export async function PUT(request: NextRequest) {
 
     const { nama_produk, kategori, stok, harga_modal, harga_jual } = body;
 
+    const updateData = {
+      nama_produk: String(nama_produk),
+      kategori: String(kategori),
+      stok: Number(stok),
+      harga_modal: Number(harga_modal),
+      harga_jual: Number(harga_jual),
+    };
+
     const { data, error } = await supabase
       .from('products')
-      .update({ nama_produk, kategori, stok, harga_modal, harga_jual })
+      .update(updateData)
       .eq('id', id)
       .select()
       .single();
