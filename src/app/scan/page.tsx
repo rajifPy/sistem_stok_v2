@@ -1,3 +1,4 @@
+// src/app/scan/page.tsx - Updated with Multi-Scan
 'use client';
 
 import { useState } from 'react';
@@ -5,17 +6,26 @@ import { useRouter } from 'next/navigation';
 import Layout from '@/components/Layout';
 import Scanner from '@/components/Scanner';
 import { formatCurrency } from '@/lib/utils';
-import { CheckCircle, XCircle, Keyboard, Camera, ArrowRight } from 'lucide-react';
+import { CheckCircle, XCircle, Keyboard, Camera, ArrowRight, ShoppingCart } from 'lucide-react';
+
+interface ScannedProduct {
+  barcode_id: string;
+  nama_produk: string;
+  harga_jual: number;
+  stok: number;
+  kategori: string;
+  quantity: number;
+}
 
 export default function ScanPage() {
   const router = useRouter();
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState('');
   const [manualBarcode, setManualBarcode] = useState('');
-  const [scanMode, setScanMode] = useState<'camera' | 'manual'>('manual');
+  const [scanMode, setScanMode] = useState<'camera' | 'manual'>('camera');
   const [loading, setLoading] = useState(false);
 
-  const handleScan = async (barcode: string) => {
+  const handleSingleScan = async (barcode: string) => {
     setLoading(true);
     try {
       const res = await fetch('/api/barcode', {
@@ -44,7 +54,7 @@ export default function ScanPage() {
   const handleManualSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (manualBarcode.trim()) {
-      handleScan(manualBarcode.trim().toUpperCase());
+      handleSingleScan(manualBarcode.trim().toUpperCase());
     }
   };
 
@@ -52,6 +62,12 @@ export default function ScanPage() {
     if (result) {
       router.push(`/transactions?barcode=${result.barcode_id}`);
     }
+  };
+
+  const handleMultiScanCheckout = async (products: ScannedProduct[]) => {
+    // Navigate to transaction page with all scanned products
+    const barcodes = products.map(p => `${p.barcode_id}:${p.quantity}`).join(',');
+    router.push(`/transactions?multi=${encodeURIComponent(barcodes)}`);
   };
 
   return (
@@ -68,6 +84,21 @@ export default function ScanPage() {
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <button
               onClick={() => {
+                setScanMode('camera');
+                setError('');
+                setResult(null);
+              }}
+              className={`flex-1 px-4 sm:px-6 py-3 sm:py-4 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 sm:gap-3 ${
+                scanMode === 'camera'
+                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <Camera size={20} className="sm:w-6 sm:h-6" />
+              <span className="text-sm sm:text-base">Multi-Scan Camera</span>
+            </button>
+            <button
+              onClick={() => {
                 setScanMode('manual');
                 setError('');
                 setResult(null);
@@ -81,31 +112,23 @@ export default function ScanPage() {
               <Keyboard size={20} className="sm:w-6 sm:h-6" />
               <span className="text-sm sm:text-base">Input Manual</span>
             </button>
-            <button
-              onClick={() => {
-                setScanMode('camera');
-                setError('');
-                setResult(null);
-              }}
-              className={`flex-1 px-4 sm:px-6 py-3 sm:py-4 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 sm:gap-3 ${
-                scanMode === 'camera'
-                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              <Camera size={20} className="sm:w-6 sm:h-6" />
-              <span className="text-sm sm:text-base">Scan Camera</span>
-            </button>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
           {/* Input Area */}
           <div>
-            {scanMode === 'manual' ? (
+            {scanMode === 'camera' ? (
+              <Scanner 
+                multiScan={true}
+                onCheckout={handleMultiScanCheckout}
+              />
+            ) : (
               <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
                 <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-4 sm:p-6 text-white">
                   <h3 className="text-lg sm:text-xl font-bold flex items-center gap-2">
+                    <Keyboard size={24} />
+                    Input Manual
                   </h3>
                 </div>
                 <div className="p-4 sm:p-6">
@@ -148,18 +171,17 @@ export default function ScanPage() {
                       <li>• Ketik kode barcode secara lengkap</li>
                       <li>• Tekan Enter atau klik "Cari Produk"</li>
                       <li>• Bisa gunakan barcode scanner keyboard</li>
+                      <li>• Untuk scan banyak produk, gunakan mode Camera</li>
                     </ul>
                   </div>
                 </div>
               </div>
-            ) : (
-              <Scanner onScan={handleScan} />
             )}
           </div>
 
           {/* Result */}
           <div>
-            {error && (
+            {error && scanMode === 'manual' && (
               <div className="bg-red-50 border border-red-200 rounded-2xl p-4 sm:p-6 animate-fade-in">
                 <div className="flex items-center gap-3 mb-2">
                   <XCircle className="text-red-600 flex-shrink-0" size={24} />
@@ -178,7 +200,7 @@ export default function ScanPage() {
               </div>
             )}
 
-            {result && (
+            {result && scanMode === 'manual' && (
               <div className="bg-white rounded-2xl shadow-lg overflow-hidden animate-fade-in">
                 <div className="bg-gradient-to-r from-green-600 to-emerald-600 p-4 sm:p-6 text-white">
                   <div className="flex items-center gap-3">
@@ -249,17 +271,53 @@ export default function ScanPage() {
               </div>
             )}
 
-            {!result && !error && (
+            {!result && !error && scanMode === 'manual' && (
               <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 text-center">
                 <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <span className="text-3xl sm:text-4xl">📦</span>
                 </div>
                 <p className="text-sm sm:text-base lg:text-lg text-gray-500">
-                  {scanMode === 'manual' 
-                    ? 'Ketik barcode untuk melihat detail produk'
-                    : 'Scan barcode untuk melihat detail produk'
-                  }
+                  Ketik barcode untuk melihat detail produk
                 </p>
+              </div>
+            )}
+
+            {scanMode === 'camera' && (
+              <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8">
+                <div className="text-center">
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <ShoppingCart className="text-blue-600" size={40} />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Multi-Scan Mode Aktif</h3>
+                  <p className="text-gray-600 mb-6">
+                    Scan beberapa produk sekaligus lalu checkout untuk proses transaksi
+                  </p>
+
+                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 text-left">
+                    <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                      <span className="text-xl">✨</span>
+                      Keunggulan Multi-Scan:
+                    </h4>
+                    <ul className="space-y-2 text-sm text-gray-700">
+                      <li className="flex items-start gap-2">
+                        <span className="text-green-600 flex-shrink-0">✓</span>
+                        <span>Scan beberapa produk tanpa henti</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-green-600 flex-shrink-0">✓</span>
+                        <span>Edit jumlah sebelum checkout</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-green-600 flex-shrink-0">✓</span>
+                        <span>Lihat total langsung</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-green-600 flex-shrink-0">✓</span>
+                        <span>Proses transaksi lebih cepat</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
               </div>
             )}
           </div>
