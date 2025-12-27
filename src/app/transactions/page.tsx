@@ -24,9 +24,27 @@ function TransactionContent() {
 
   useEffect(() => {
     fetchTransactions();
+    
+    // Handle single barcode
     if (barcodeParam) {
       setBarcode(barcodeParam);
       handleAddToCart(barcodeParam);
+    }
+    
+    // Handle multiple products from multi-scan
+    const multiParam = searchParams.get('multi');
+    if (multiParam) {
+      const products = multiParam.split(',').map(item => {
+        const [barcode_id, quantity] = item.split(':');
+        return { barcode_id, quantity: parseInt(quantity) };
+      });
+      
+      // Add all products to cart
+      products.forEach(({ barcode_id, quantity }) => {
+        for (let i = 0; i < quantity; i++) {
+          handleAddToCart(barcode_id);
+        }
+      });
     }
   }, [barcodeParam]);
 
