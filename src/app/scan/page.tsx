@@ -105,11 +105,6 @@ export default function ScanPage() {
             {scanMode === 'manual' ? (
               <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
                 <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-4 sm:p-6 text-white">
-                  <h3 className="text-lg sm:text-xl font-bold flex items-center gap-2">
-                    <Keyboard size={20} className="sm:w-6 sm:h-6" />
-                    <span className="text-sm sm:text-base">Input Barcode Manual</span>
-                  </h3>
-                </div>
                 <div className="p-4 sm:p-6">
                   <form onSubmit={handleManualSubmit} className="space-y-4">
                     <div>
