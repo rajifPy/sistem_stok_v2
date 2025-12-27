@@ -65,6 +65,8 @@ export default function ScanPage() {
   };
 
   const handleMultiScanCheckout = async (products: ScannedProduct[]) => {
+    if (products.length === 0) return;
+    
     // Navigate to transaction page with all scanned products
     const barcodes = products.map(p => `${p.barcode_id}:${p.quantity}`).join(',');
     router.push(`/transactions?multi=${encodeURIComponent(barcodes)}`);
