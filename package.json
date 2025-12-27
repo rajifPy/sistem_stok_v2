@@ -14,8 +14,7 @@
     "type-check": "tsc --noEmit",
     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,md}\"",
     "clean": "rm -rf .next node_modules",
-    "vercel-build": "next build",
-    "postinstall": "npm run type-check"
+    "vercel-build": "next build"
   },
   "dependencies": {
     "next": "14.2.5",
