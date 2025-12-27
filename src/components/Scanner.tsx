@@ -82,12 +82,12 @@ export default function Scanner({ onScan, multiScan = true, onCheckout }: Scanne
       
       if (existing) {
         if (existing.quantity >= product.stok) {
-          setError(`Stok ${product.nama_produk} tidak cukup`);
+          setError(`Stok ${product.nama_produk} tidak cukup (Max: ${product.stok})`);
           setTimeout(() => setError(''), 3000);
           return prev;
         }
         
-        setSuccess(`✓ ${product.nama_produk} +1`);
+        setSuccess(`✓ ${product.nama_produk} qty +1`);
         setTimeout(() => setSuccess(''), 2000);
         
         return prev.map((p) =>
