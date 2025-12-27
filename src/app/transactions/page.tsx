@@ -1,4 +1,4 @@
-// src/app/transactions/page.tsx - Updated dengan Auto Print
+// src/app/transactions/page.tsx - Fixed Type Error
 'use client';
 
 import { useEffect, useState, Suspense } from 'react';
@@ -165,8 +165,6 @@ function TransactionContent() {
       // Auto print jika diaktifkan - COMBINED RECEIPT
       if (autoPrint && completedTransactions.length > 0) {
         setPrinting(true);
-        // Import print function dynamically
-        const { printReceipt } = await import('@/components/PrintReceipt');
         
         // Buat combined receipt untuk multiple items
         const combinedReceipt = {
@@ -181,12 +179,10 @@ function TransactionContent() {
           created_at: completedTransactions[0].created_at,
         };
 
-        // Print combined receipt
+        // Print combined receipt - FIXED: Remove truthiness check
         setTimeout(() => {
-          const printed = printReceipt(combinedReceipt);
-          if (printed) {
-            console.log('✅ Struk berhasil dicetak');
-          }
+          printReceipt(combinedReceipt);
+          console.log('✅ Struk berhasil dicetak');
           setPrinting(false);
         }, 500);
       }
@@ -220,15 +216,13 @@ function TransactionContent() {
     }
   };
 
-  const handleReprintLast = async () => {
+  const handleReprintLast = () => {
     if (lastTransaction) {
-      const { printReceipt } = await import('@/components/PrintReceipt');
       printReceipt(lastTransaction);
     }
   };
 
-  const handlePrintTransaction = async (trans: Transaction) => {
-    const { printReceipt } = await import('@/components/PrintReceipt');
+  const handlePrintTransaction = (trans: Transaction) => {
     printReceipt(trans);
   };
 
