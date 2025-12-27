@@ -17,6 +17,7 @@ function TransactionContent() {
   const [cart, setCart] = useState<any[]>([]);
   const [barcode, setBarcode] = useState('');
   const [loading, setLoading] = useState(false);
+  const [printing, setPrinting] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
   const [lastTransaction, setLastTransaction] = useState<any>(null);
@@ -135,6 +136,7 @@ function TransactionContent() {
     try {
       const completedTransactions = [];
 
+      // Process all transactions
       for (const item of cart) {
         const res = await fetch('/api/transactions', {
           method: 'POST',
@@ -160,19 +162,50 @@ function TransactionContent() {
       const printSettings = localStorage.getItem('printSettings');
       const autoPrint = printSettings ? JSON.parse(printSettings).autoPrint : true;
 
-      // Auto print jika diaktifkan
+      // Auto print jika diaktifkan - COMBINED RECEIPT
       if (autoPrint && completedTransactions.length > 0) {
-        // Print all transactions
-        for (const trans of completedTransactions) {
-          setTimeout(() => {
-            printReceipt(trans);
-          }, 300);
-        }
+        setPrinting(true);
+        // Import print function dynamically
+        const { printReceipt } = await import('@/components/PrintReceipt');
+        
+        // Buat combined receipt untuk multiple items
+        const combinedReceipt = {
+          transaksi_id: completedTransactions[0].transaksi_id,
+          items: completedTransactions.map(trans => ({
+            nama_produk: trans.nama_produk,
+            jumlah: trans.jumlah,
+            harga_satuan: trans.harga_satuan,
+            total_harga: trans.total_harga,
+          })),
+          total_harga: completedTransactions.reduce((sum, trans) => sum + trans.total_harga, 0),
+          created_at: completedTransactions[0].created_at,
+        };
+
+        // Print combined receipt
+        setTimeout(() => {
+          const printed = printReceipt(combinedReceipt);
+          if (printed) {
+            console.log('✅ Struk berhasil dicetak');
+          }
+          setPrinting(false);
+        }, 500);
       }
 
       // Simpan transaksi terakhir untuk tombol print ulang
       if (completedTransactions.length > 0) {
-        setLastTransaction(completedTransactions);
+        // Save as combined receipt
+        const combinedReceipt = {
+          transaksi_id: completedTransactions[0].transaksi_id,
+          items: completedTransactions.map(trans => ({
+            nama_produk: trans.nama_produk,
+            jumlah: trans.jumlah,
+            harga_satuan: trans.harga_satuan,
+            total_harga: trans.total_harga,
+          })),
+          total_harga: completedTransactions.reduce((sum, trans) => sum + trans.total_harga, 0),
+          created_at: completedTransactions[0].created_at,
+        };
+        setLastTransaction(combinedReceipt);
       }
 
       setCart([]);
@@ -187,15 +220,15 @@ function TransactionContent() {
     }
   };
 
-  const handleReprintLast = () => {
-    if (lastTransaction && lastTransaction.length > 0) {
-      lastTransaction.forEach((trans: any) => {
-        printReceipt(trans);
-      });
+  const handleReprintLast = async () => {
+    if (lastTransaction) {
+      const { printReceipt } = await import('@/components/PrintReceipt');
+      printReceipt(lastTransaction);
     }
   };
 
-  const handlePrintTransaction = (trans: Transaction) => {
+  const handlePrintTransaction = async (trans: Transaction) => {
+    const { printReceipt } = await import('@/components/PrintReceipt');
     printReceipt(trans);
   };
 
@@ -212,17 +245,27 @@ function TransactionContent() {
 
         {/* Success Message */}
         {success && (
-          <div className="mb-6 bg-green-50 border border-green-200 rounded-xl p-4 flex items-center justify-between gap-3 animate-fade-in">
+          <div className="mb-6 bg-green-50 border-2 border-green-200 rounded-xl p-4 flex items-center justify-between gap-3 animate-fade-in shadow-lg">
             <div className="flex items-center gap-3">
-              <CheckCircle className="text-green-600 flex-shrink-0" size={24} />
-              <span className="text-green-800 font-semibold">{success}</span>
+              <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                <CheckCircle className="text-white" size={24} />
+              </div>
+              <div>
+                <p className="text-green-900 font-bold text-lg">{success}</p>
+                <p className="text-green-700 text-sm">
+                  {lastTransaction && 'items' in lastTransaction 
+                    ? `${lastTransaction.items.length} produk • Total: ${formatCurrency(lastTransaction.total_harga)}`
+                    : 'Struk telah dicetak'
+                  }
+                </p>
+              </div>
             </div>
             {lastTransaction && (
               <button
                 onClick={handleReprintLast}
-                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center gap-2 text-sm"
+                className="px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-colors flex items-center gap-2 text-sm font-semibold shadow-md hover:shadow-lg"
               >
-                <Printer size={16} />
+                <Printer size={18} />
                 Print Ulang
               </button>
             )}
@@ -399,13 +442,18 @@ function TransactionContent() {
                   
                   <button
                     onClick={handleCheckout}
-                    disabled={loading}
+                    disabled={loading || printing}
                     className="w-full px-6 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:shadow-lg text-white font-semibold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     {loading ? (
                       <>
                         <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                         Processing...
+                      </>
+                    ) : printing ? (
+                      <>
+                        <Printer className="animate-pulse" size={20} />
+                        Mencetak...
                       </>
                     ) : (
                       <>
