@@ -21,7 +21,7 @@ export default function ProductsPage() {
     harga_jual: 0,
   });
 
-  const qrCanvasRefs = useRef<{ [key: string]: HTMLCanvasElement | null }>({});
+  const qrCanvasRefs = useRef<Record<string, HTMLCanvasElement | null>>({});
 
   useEffect(() => {
     fetchProducts();
@@ -565,7 +565,9 @@ export default function ProductsPage() {
                     return (
                       <div key={productId} className="bg-gray-50 rounded-xl p-6 text-center">
                         <canvas
-                          ref={el => qrCanvasRefs.current[productId] = el}
+                          ref={el => {
+                            qrCanvasRefs.current[productId] = el;
+                          }}
                           className="mx-auto mb-4 border-4 border-white shadow-lg rounded-lg"
                         />
                         <h3 className="font-bold text-lg text-gray-900 mb-1">{product.nama_produk}</h3>
