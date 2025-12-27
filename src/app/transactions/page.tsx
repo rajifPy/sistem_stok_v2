@@ -1,10 +1,12 @@
+// src/app/transactions/page.tsx - Updated dengan Auto Print
 'use client';
 
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Layout from '@/components/Layout';
+import { printReceipt } from '@/components/PrintReceipt';
 import { formatCurrency, formatDateTime } from '@/lib/utils';
-import { ShoppingCart, Plus, Minus, Trash2, CheckCircle, Search, AlertCircle } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, Trash2, CheckCircle, Search, AlertCircle, Printer } from 'lucide-react';
 import type { Transaction } from '@/lib/db';
 
 function TransactionContent() {
@@ -17,6 +19,7 @@ function TransactionContent() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
+  const [lastTransaction, setLastTransaction] = useState<any>(null);
 
   useEffect(() => {
     fetchTransactions();
@@ -55,18 +58,15 @@ function TransactionContent() {
       const data = await res.json();
 
       if (data.found && data.product) {
-        // Check if product has stock
         if (data.product.stok === 0) {
           setError(`Produk "${data.product.nama_produk}" stok habis`);
           setLoading(false);
           return;
         }
 
-        // Check if already in cart
         const existing = cart.find((item) => item.barcode_id === barcodeId);
         
         if (existing) {
-          // Check if adding one more exceeds stock
           if (existing.quantity >= data.product.stok) {
             setError(`Stok ${data.product.nama_produk} tidak cukup. Tersedia: ${data.product.stok}`);
             setLoading(false);
@@ -88,8 +88,6 @@ function TransactionContent() {
         
         setBarcode('');
         setError('');
-        
-        // Clear success message after 2 seconds
         setTimeout(() => setSuccess(''), 2000);
       } else {
         setError(`Produk dengan barcode "${barcodeId}" tidak ditemukan`);
@@ -109,7 +107,6 @@ function TransactionContent() {
           if (item.barcode_id === barcode_id) {
             const newQty = item.quantity + delta;
             
-            // Check stock limit
             if (newQty > item.stok) {
               setError(`Stok ${item.nama_produk} tidak cukup. Tersedia: ${item.stok}`);
               return item;
@@ -136,6 +133,8 @@ function TransactionContent() {
     setError('');
 
     try {
+      const completedTransactions = [];
+
       for (const item of cart) {
         const res = await fetch('/api/transactions', {
           method: 'POST',
@@ -151,9 +150,31 @@ function TransactionContent() {
         if (data.error) {
           throw new Error(data.error);
         }
+
+        completedTransactions.push(data);
       }
 
       setSuccess('Transaksi berhasil! 🎉');
+      
+      // Check auto print settings
+      const printSettings = localStorage.getItem('printSettings');
+      const autoPrint = printSettings ? JSON.parse(printSettings).autoPrint : true;
+
+      // Auto print jika diaktifkan
+      if (autoPrint && completedTransactions.length > 0) {
+        // Print all transactions
+        for (const trans of completedTransactions) {
+          setTimeout(() => {
+            printReceipt(trans);
+          }, 300);
+        }
+      }
+
+      // Simpan transaksi terakhir untuk tombol print ulang
+      if (completedTransactions.length > 0) {
+        setLastTransaction(completedTransactions);
+      }
+
       setCart([]);
       fetchTransactions();
       
@@ -164,6 +185,18 @@ function TransactionContent() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleReprintLast = () => {
+    if (lastTransaction && lastTransaction.length > 0) {
+      lastTransaction.forEach((trans: any) => {
+        printReceipt(trans);
+      });
+    }
+  };
+
+  const handlePrintTransaction = (trans: Transaction) => {
+    printReceipt(trans);
   };
 
   const total = cart.reduce((sum, item) => sum + item.harga_jual * item.quantity, 0);
@@ -179,9 +212,20 @@ function TransactionContent() {
 
         {/* Success Message */}
         {success && (
-          <div className="mb-6 bg-green-50 border border-green-200 rounded-xl p-4 flex items-center gap-3 animate-fade-in">
-            <CheckCircle className="text-green-600 flex-shrink-0" size={24} />
-            <span className="text-green-800 font-semibold">{success}</span>
+          <div className="mb-6 bg-green-50 border border-green-200 rounded-xl p-4 flex items-center justify-between gap-3 animate-fade-in">
+            <div className="flex items-center gap-3">
+              <CheckCircle className="text-green-600 flex-shrink-0" size={24} />
+              <span className="text-green-800 font-semibold">{success}</span>
+            </div>
+            {lastTransaction && (
+              <button
+                onClick={handleReprintLast}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center gap-2 text-sm"
+              >
+                <Printer size={16} />
+                Print Ulang
+              </button>
+            )}
           </div>
         )}
 
@@ -194,7 +238,7 @@ function TransactionContent() {
             </div>
             <button
               onClick={() => setError('')}
-              className="text-red-600 hover:text-red-800"
+              className="text-red-600 hover:text-red-800 text-2xl leading-none"
             >
               ×
             </button>
@@ -281,7 +325,6 @@ function TransactionContent() {
                     <ShoppingCart size={48} className="mx-auto mb-3 opacity-50" />
                     <p className="font-semibold">Keranjang kosong</p>
                     <p className="text-sm mt-1">Scan barcode untuk menambah produk</p>
-                    <p className="text-xs mt-2 text-gray-500">Anda bisa menambahkan banyak produk berbeda</p>
                   </div>
                 ) : (
                   cart.map((item, index) => (
@@ -339,7 +382,6 @@ function TransactionContent() {
               {/* Checkout */}
               {cart.length > 0 && (
                 <div className="mt-6 pt-6 border-t border-gray-200">
-                  {/* Items Summary */}
                   <div className="mb-4 space-y-2">
                     <div className="flex justify-between text-sm text-gray-600">
                       <span>Jumlah Produk:</span>
@@ -368,7 +410,7 @@ function TransactionContent() {
                     ) : (
                       <>
                         <CheckCircle size={20} />
-                        Checkout Sekarang
+                        Checkout & Print
                       </>
                     )}
                   </button>
@@ -397,7 +439,16 @@ function TransactionContent() {
                           <p className="font-semibold text-gray-900">{trans.nama_produk}</p>
                           <p className="text-xs text-gray-500 font-mono">{trans.transaksi_id}</p>
                         </div>
-                        <p className="font-bold text-blue-600">{formatCurrency(trans.total_harga)}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-bold text-blue-600">{formatCurrency(trans.total_harga)}</p>
+                          <button
+                            onClick={() => handlePrintTransaction(trans)}
+                            className="p-2 text-gray-600 hover:bg-gray-200 rounded-lg transition-colors"
+                            title="Print Struk"
+                          >
+                            <Printer size={16} />
+                          </button>
+                        </div>
                       </div>
                       <div className="flex justify-between items-center text-sm">
                         <span className="text-gray-600">
