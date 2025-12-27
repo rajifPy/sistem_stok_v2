@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/db';
+import type { Database } from '@/lib/db';
+
+type TransactionInsert = Database['public']['Tables']['transactions']['Insert'];
 
 // GET - Get all transactions
 export async function GET() {
@@ -65,20 +68,20 @@ export async function POST(request: NextRequest) {
     const keuntungan = jumlah * (product.harga_jual - product.harga_modal);
 
     // Create transaction
+    const transactionData: TransactionInsert = {
+      transaksi_id,
+      product_id: product.id,
+      barcode_id: product.barcode_id,
+      nama_produk: product.nama_produk,
+      jumlah: Number(jumlah),
+      harga_satuan: product.harga_jual,
+      total_harga,
+      keuntungan,
+    };
+
     const { data: transaction, error: transError } = await supabase
       .from('transactions')
-      .insert([
-        {
-          transaksi_id,
-          product_id: product.id,
-          barcode_id: product.barcode_id,
-          nama_produk: product.nama_produk,
-          jumlah,
-          harga_satuan: product.harga_jual,
-          total_harga,
-          keuntungan,
-        },
-      ])
+      .insert(transactionData)
       .select()
       .single();
 
