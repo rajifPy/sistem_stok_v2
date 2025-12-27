@@ -5,6 +5,7 @@ import Layout from '@/components/Layout';
 import { formatCurrency, generateBarcodeId } from '@/lib/utils';
 import { Plus, Edit, Trash2, Search, Save, X, Download, Printer, QrCode, Package } from 'lucide-react';
 import type { Product } from '@/lib/db';
+import QRCodeLib from 'qrcode';
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -40,50 +41,61 @@ export default function ProductsPage() {
   };
 
   const generateQRCodes = () => {
-    selectedProducts.forEach(productId => {
+    selectedProducts.forEach(async (productId) => {
       const product = products.find(p => p.id === productId);
       if (product && qrCanvasRefs.current[productId]) {
-        generateQRCode(product.barcode_id, qrCanvasRefs.current[productId]!);
+        await generateQRCode(product.barcode_id, qrCanvasRefs.current[productId]!);
       }
     });
   };
 
-  const generateQRCode = (text: string, canvas: HTMLCanvasElement) => {
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+  const generateQRCode = async (text: string, canvas: HTMLCanvasElement) => {
+    try {
+      // Generate QR Code with high quality settings
+      await QRCodeLib.toCanvas(canvas, text, {
+        width: 300,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        },
+        errorCorrectionLevel: 'H', // High error correction
+      });
 
-    const size = 200;
-    canvas.width = size;
-    canvas.height = size;
-
-    const qrSize = 25;
-    const cellSize = size / qrSize;
-
-    ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(0, 0, size, size);
-
-    ctx.fillStyle = '#000000';
-    for (let i = 0; i < qrSize; i++) {
-      for (let j = 0; j < qrSize; j++) {
-        const charCode = text.charCodeAt((i * qrSize + j) % text.length);
-        if ((i + j + charCode) % 2 === 0) {
-          ctx.fillRect(j * cellSize, i * cellSize, cellSize, cellSize);
+      // Add text label below QR code
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        const canvasSize = 300;
+        const newHeight = canvasSize + 60;
+        
+        // Create temporary canvas to copy existing QR
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = canvasSize;
+        tempCanvas.height = canvasSize;
+        const tempCtx = tempCanvas.getContext('2d');
+        if (tempCtx) {
+          tempCtx.drawImage(canvas, 0, 0);
         }
+
+        // Resize main canvas
+        canvas.height = newHeight;
+        
+        // White background
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, canvasSize, newHeight);
+        
+        // Draw QR code back
+        ctx.drawImage(tempCanvas, 0, 0);
+        
+        // Draw text
+        ctx.fillStyle = '#000000';
+        ctx.font = 'bold 18px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(text, canvasSize / 2, canvasSize + 35);
       }
+    } catch (error) {
+      console.error('QR Code generation error:', error);
     }
-
-    const drawFinderPattern = (x: number, y: number) => {
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(x * cellSize, y * cellSize, 7 * cellSize, 7 * cellSize);
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect((x + 1) * cellSize, (y + 1) * cellSize, 5 * cellSize, 5 * cellSize);
-      ctx.fillStyle = '#000000';
-      ctx.fillRect((x + 2) * cellSize, (y + 2) * cellSize, 3 * cellSize, 3 * cellSize);
-    };
-
-    drawFinderPattern(0, 0);
-    drawFinderPattern(qrSize - 7, 0);
-    drawFinderPattern(0, qrSize - 7);
   };
 
   const downloadQRCode = (productId: string) => {
@@ -536,22 +548,42 @@ export default function ProductsPage() {
                     if (!product) return null;
 
                     return (
-                      <div key={productId} className="bg-gray-50 rounded-xl border border-gray-200 p-6 text-center hover:shadow-md transition-shadow">
-                        <canvas
-                          ref={el => {
-                            qrCanvasRefs.current[productId] = el;
-                          }}
-                          className="mx-auto mb-4 border-2 border-white shadow-md rounded-lg"
-                        />
-                        <h3 className="font-bold text-lg text-gray-900 mb-1">{product.nama_produk}</h3>
-                        <p className="text-sm font-mono text-gray-600 mb-2">{product.barcode_id}</p>
-                        <p className="text-xl font-bold text-blue-600 mb-4">{formatCurrency(product.harga_jual)}</p>
+                      <div key={productId} className="bg-white rounded-xl border-2 border-gray-200 p-6 text-center hover:shadow-lg transition-shadow">
+                        <div className="bg-gray-50 rounded-xl p-4 mb-4 inline-block">
+                          <canvas
+                            ref={el => {
+                              qrCanvasRefs.current[productId] = el;
+                            }}
+                            className="mx-auto"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <h3 className="font-bold text-lg text-gray-900">{product.nama_produk}</h3>
+                          <div className="flex items-center justify-center gap-2">
+                            <span className="px-3 py-1 bg-blue-50 text-blue-700 text-xs font-semibold rounded-full">
+                              {product.kategori}
+                            </span>
+                            <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
+                              product.stok === 0
+                                ? 'bg-red-50 text-red-700'
+                                : product.stok < 10
+                                ? 'bg-yellow-50 text-yellow-700'
+                                : 'bg-green-50 text-green-700'
+                            }`}>
+                              Stok: {product.stok}
+                            </span>
+                          </div>
+                          <p className="text-sm font-mono text-gray-600 bg-gray-50 py-2 px-3 rounded-lg">
+                            {product.barcode_id}
+                          </p>
+                          <p className="text-2xl font-bold text-blue-600">{formatCurrency(product.harga_jual)}</p>
+                        </div>
                         <button
                           onClick={() => downloadQRCode(productId)}
-                          className="w-full px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
+                          className="w-full mt-4 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:shadow-lg text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
                         >
                           <Download size={18} />
-                          Download
+                          Download QR Code
                         </button>
                       </div>
                     );
