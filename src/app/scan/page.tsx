@@ -56,29 +56,30 @@ export default function ScanPage() {
 
   return (
     <Layout>
-      <div className="p-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Scan Barcode</h1>
-          <p className="text-gray-600">Scan barcode produk untuk transaksi</p>
+      <div className="p-4 sm:p-6 lg:p-8">
+        {/* Header */}
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Scan Barcode</h1>
+          <p className="text-sm sm:text-base text-gray-600">Scan barcode produk untuk transaksi</p>
         </div>
 
         {/* Mode Selector */}
-        <div className="bg-white rounded-xl shadow-lg p-4 mb-6">
-          <div className="flex gap-4">
+        <div className="bg-white rounded-xl shadow-lg p-3 sm:p-4 mb-4 sm:mb-6">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <button
               onClick={() => {
                 setScanMode('manual');
                 setError('');
                 setResult(null);
               }}
-              className={`flex-1 px-6 py-4 rounded-lg font-semibold transition-all flex items-center justify-center gap-3 ${
+              className={`flex-1 px-4 sm:px-6 py-3 sm:py-4 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 sm:gap-3 ${
                 scanMode === 'manual'
                   ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              <Keyboard size={24} />
-              Input Manual
+              <Keyboard size={20} className="sm:w-6 sm:h-6" />
+              <span className="text-sm sm:text-base">Input Manual</span>
             </button>
             <button
               onClick={() => {
@@ -86,30 +87,30 @@ export default function ScanPage() {
                 setError('');
                 setResult(null);
               }}
-              className={`flex-1 px-6 py-4 rounded-lg font-semibold transition-all flex items-center justify-center gap-3 ${
+              className={`flex-1 px-4 sm:px-6 py-3 sm:py-4 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 sm:gap-3 ${
                 scanMode === 'camera'
                   ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              <Camera size={24} />
-              Scan Camera
+              <Camera size={20} className="sm:w-6 sm:h-6" />
+              <span className="text-sm sm:text-base">Scan Camera</span>
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
           {/* Input Area */}
           <div>
             {scanMode === 'manual' ? (
               <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-                <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 text-white">
-                  <h3 className="text-xl font-bold flex items-center gap-2">
-                    <Keyboard size={24} />
-                    Input Barcode Manual
+                <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-4 sm:p-6 text-white">
+                  <h3 className="text-lg sm:text-xl font-bold flex items-center gap-2">
+                    <Keyboard size={20} className="sm:w-6 sm:h-6" />
+                    <span className="text-sm sm:text-base">Input Barcode Manual</span>
                   </h3>
                 </div>
-                <div className="p-6">
+                <div className="p-4 sm:p-6">
                   <form onSubmit={handleManualSubmit} className="space-y-4">
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -120,14 +121,14 @@ export default function ScanPage() {
                         value={manualBarcode}
                         onChange={(e) => setManualBarcode(e.target.value.toUpperCase())}
                         placeholder="Ketik barcode... (contoh: BRK001)"
-                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-lg"
+                        className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-base sm:text-lg"
                         autoFocus
                       />
                     </div>
                     <button
                       type="submit"
                       disabled={!manualBarcode.trim() || loading}
-                      className="w-full px-6 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold rounded-lg hover:shadow-lg transition-all disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      className="w-full px-4 sm:px-6 py-3 sm:py-4 bg-gradient-to-r from-blue-600 to-indigo-600 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold rounded-lg hover:shadow-lg transition-all disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm sm:text-base"
                     >
                       {loading ? (
                         <>
@@ -143,9 +144,9 @@ export default function ScanPage() {
                     </button>
                   </form>
 
-                  <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <h4 className="font-semibold text-blue-900 mb-2">💡 Tips:</h4>
-                    <ul className="text-sm text-blue-800 space-y-1">
+                  <div className="mt-4 sm:mt-6 bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4">
+                    <h4 className="font-semibold text-blue-900 mb-2 text-sm sm:text-base">💡 Tips:</h4>
+                    <ul className="text-xs sm:text-sm text-blue-800 space-y-1">
                       <li>• Ketik kode barcode secara lengkap</li>
                       <li>• Tekan Enter atau klik "Cari Produk"</li>
                       <li>• Bisa gunakan barcode scanner keyboard</li>
@@ -161,18 +162,18 @@ export default function ScanPage() {
           {/* Result */}
           <div>
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-2xl p-6 animate-fade-in">
+              <div className="bg-red-50 border border-red-200 rounded-2xl p-4 sm:p-6 animate-fade-in">
                 <div className="flex items-center gap-3 mb-2">
-                  <XCircle className="text-red-600" size={24} />
-                  <h3 className="text-lg font-bold text-red-900">Scan Gagal</h3>
+                  <XCircle className="text-red-600 flex-shrink-0" size={24} />
+                  <h3 className="text-base sm:text-lg font-bold text-red-900">Scan Gagal</h3>
                 </div>
-                <p className="text-red-700">{error}</p>
+                <p className="text-sm sm:text-base text-red-700 mb-4">{error}</p>
                 <button
                   onClick={() => {
                     setError('');
                     setManualBarcode('');
                   }}
-                  className="mt-4 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+                  className="w-full sm:w-auto px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm sm:text-base"
                 >
                   Coba Lagi
                 </button>
@@ -181,35 +182,35 @@ export default function ScanPage() {
 
             {result && (
               <div className="bg-white rounded-2xl shadow-lg overflow-hidden animate-fade-in">
-                <div className="bg-gradient-to-r from-green-600 to-emerald-600 p-6 text-white">
-                  <div className="flex items-center gap-3 mb-2">
-                    <CheckCircle size={24} />
-                    <h3 className="text-xl font-bold">Produk Ditemukan!</h3>
+                <div className="bg-gradient-to-r from-green-600 to-emerald-600 p-4 sm:p-6 text-white">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle size={24} className="flex-shrink-0" />
+                    <h3 className="text-lg sm:text-xl font-bold">Produk Ditemukan!</h3>
                   </div>
                 </div>
 
-                <div className="p-6 space-y-4">
+                <div className="p-4 sm:p-6 space-y-4">
                   <div>
-                    <p className="text-sm text-gray-600">Barcode ID</p>
-                    <p className="text-2xl font-mono font-bold text-blue-600">{result.barcode_id}</p>
+                    <p className="text-xs sm:text-sm text-gray-600">Barcode ID</p>
+                    <p className="text-xl sm:text-2xl font-mono font-bold text-blue-600 break-all">{result.barcode_id}</p>
                   </div>
 
                   <div>
-                    <p className="text-sm text-gray-600">Nama Produk</p>
-                    <p className="text-xl font-bold text-gray-900">{result.nama_produk}</p>
+                    <p className="text-xs sm:text-sm text-gray-600">Nama Produk</p>
+                    <p className="text-lg sm:text-xl font-bold text-gray-900">{result.nama_produk}</p>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4">
                     <div>
-                      <p className="text-sm text-gray-600">Kategori</p>
-                      <span className="inline-block mt-1 px-3 py-1 bg-blue-100 text-blue-800 text-sm font-semibold rounded-full">
+                      <p className="text-xs sm:text-sm text-gray-600">Kategori</p>
+                      <span className="inline-block mt-1 px-2 sm:px-3 py-1 bg-blue-100 text-blue-800 text-xs sm:text-sm font-semibold rounded-full">
                         {result.kategori}
                       </span>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Stok</p>
+                      <p className="text-xs sm:text-sm text-gray-600">Stok</p>
                       <span
-                        className={`inline-block mt-1 px-3 py-1 text-sm font-bold rounded-full ${
+                        className={`inline-block mt-1 px-2 sm:px-3 py-1 text-xs sm:text-sm font-bold rounded-full ${
                           result.stok === 0
                             ? 'bg-red-100 text-red-800'
                             : result.stok < 10
@@ -223,37 +224,39 @@ export default function ScanPage() {
                   </div>
 
                   <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4">
-                    <p className="text-sm text-gray-600">Harga Jual</p>
-                    <p className="text-3xl font-bold text-blue-600">{formatCurrency(result.harga_jual)}</p>
+                    <p className="text-xs sm:text-sm text-gray-600">Harga Jual</p>
+                    <p className="text-2xl sm:text-3xl font-bold text-blue-600">{formatCurrency(result.harga_jual)}</p>
                   </div>
 
-                  <button
-                    onClick={handleTransaction}
-                    disabled={result.stok === 0}
-                    className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold rounded-xl hover:shadow-lg transition-all disabled:cursor-not-allowed"
-                  >
-                    {result.stok === 0 ? 'Stok Habis' : 'Buat Transaksi'}
-                  </button>
+                  <div className="space-y-2 sm:space-y-3">
+                    <button
+                      onClick={handleTransaction}
+                      disabled={result.stok === 0}
+                      className="w-full px-4 sm:px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold rounded-xl hover:shadow-lg transition-all disabled:cursor-not-allowed text-sm sm:text-base"
+                    >
+                      {result.stok === 0 ? 'Stok Habis' : 'Buat Transaksi'}
+                    </button>
 
-                  <button
-                    onClick={() => {
-                      setResult(null);
-                      setManualBarcode('');
-                    }}
-                    className="w-full px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-xl transition-colors"
-                  >
-                    Scan Produk Lain
-                  </button>
+                    <button
+                      onClick={() => {
+                        setResult(null);
+                        setManualBarcode('');
+                      }}
+                      className="w-full px-4 sm:px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-xl transition-colors text-sm sm:text-base"
+                    >
+                      Scan Produk Lain
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
 
             {!result && !error && (
-              <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
-                <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-4xl">📦</span>
+              <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 text-center">
+                <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-3xl sm:text-4xl">📦</span>
                 </div>
-                <p className="text-gray-500 text-lg">
+                <p className="text-sm sm:text-base lg:text-lg text-gray-500">
                   {scanMode === 'manual' 
                     ? 'Ketik barcode untuk melihat detail produk'
                     : 'Scan barcode untuk melihat detail produk'
