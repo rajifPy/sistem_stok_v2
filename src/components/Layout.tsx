@@ -32,82 +32,90 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
+    <div className="flex min-h-screen bg-gray-50">
       {/* Mobile Menu Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 sm:p-3 bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow"
+        className="lg:hidden fixed top-4 left-4 z-50 p-2.5 bg-white rounded-xl shadow-md hover:shadow-lg transition-all"
         aria-label="Toggle menu"
       >
-        {isOpen ? <X size={24} /> : <Menu size={24} />}
+        {isOpen ? <X size={22} /> : <Menu size={22} />}
       </button>
 
       {/* Sidebar */}
       <aside
         className={`
           fixed lg:static inset-y-0 left-0 z-40
-          w-64 sm:w-72 bg-white shadow-xl
+          w-72 bg-white border-r border-gray-200
           transform transition-transform duration-300 ease-in-out
           ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}
       >
         {/* Logo */}
-        <div className="p-4 sm:p-6 border-b">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center text-xl sm:text-2xl">
-              🏪
-            </div>
-            <div>
-              <h2 className="text-lg sm:text-xl font-bold text-gray-900">Kantin</h2>
-              <p className="text-xs text-gray-500">Sistem POS</p>
-            </div>
+        <div className="h-16 px-6 border-b border-gray-200 flex items-center gap-3">
+          <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center text-xl shadow-md">
+            🏪
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-gray-900">Kantin POS</h2>
+            <p className="text-xs text-gray-500">Sistem Modern</p>
           </div>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-3 sm:p-4 overflow-y-auto max-h-[calc(100vh-240px)]">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = pathname === item.href;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setIsOpen(false)}
-                className={`
-                  flex items-center gap-3 px-3 sm:px-4 py-2.5 sm:py-3 mb-2 rounded-lg
-                  transition-all duration-200
-                  ${isActive
-                    ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg scale-[1.02]'
-                    : 'text-gray-700 hover:bg-gray-100 hover:scale-[1.01]'
-                  }
-                `}
-              >
-                <Icon size={20} className="flex-shrink-0" />
-                <span className="font-medium text-sm sm:text-base">{item.label}</span>
-              </Link>
-            );
-          })}
+        <nav className="flex-1 p-4 overflow-y-auto" style={{ height: 'calc(100vh - 180px)' }}>
+          <div className="space-y-1">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setIsOpen(false)}
+                  className={`
+                    group flex items-center gap-3 px-4 py-3 rounded-lg
+                    transition-all duration-200 relative overflow-hidden
+                    ${isActive
+                      ? 'bg-blue-50 text-blue-600'
+                      : 'text-gray-700 hover:bg-gray-50'
+                    }
+                  `}
+                >
+                  {isActive && (
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600 rounded-r" />
+                  )}
+                  <Icon 
+                    size={20} 
+                    className={`flex-shrink-0 ${isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'}`}
+                  />
+                  <span className={`font-medium ${isActive ? 'text-blue-600' : ''}`}>
+                    {item.label}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
         </nav>
 
         {/* User Section */}
-        <div className="p-3 sm:p-4 border-t">
-          <div className="flex items-center gap-3 mb-3 p-2 sm:p-3 bg-gray-50 rounded-lg">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-sm sm:text-base flex-shrink-0">
+        <div className="h-24 px-4 py-3 border-t border-gray-200">
+          <div className="flex items-center gap-3 mb-3 p-2 rounded-lg hover:bg-gray-50 transition-colors">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 shadow-md">
               {username[0]}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-gray-900 truncate">{username}</p>
-              <p className="text-xs text-gray-500">Admin</p>
+              <p className="text-xs text-gray-500">Administrator</p>
             </div>
+            <button
+              onClick={handleLogout}
+              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              title="Logout"
+            >
+              <LogOut size={18} />
+            </button>
           </div>
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors text-sm sm:text-base"
-          >
-            <LogOut size={18} className="flex-shrink-0" />
-            <span className="font-medium">Logout</span>
-          </button>
         </div>
       </aside>
 
@@ -115,7 +123,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {isOpen && (
         <div
           onClick={() => setIsOpen(false)}
-          className="lg:hidden fixed inset-0 bg-black/50 z-30 animate-fade-in"
+          className="lg:hidden fixed inset-0 bg-black/30 backdrop-blur-sm z-30 animate-fade-in"
         />
       )}
 
