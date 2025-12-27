@@ -26,23 +26,64 @@ export interface Transaction {
   created_at: string;
 }
 
-// Database types
-export interface Database {
+// Database types for Supabase
+export type Database = {
   public: {
     Tables: {
       products: {
         Row: Product;
-        Insert: Omit<Product, 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<Product, 'id' | 'created_at'>>;
+        Insert: {
+          barcode_id: string;
+          nama_produk: string;
+          kategori: string;
+          stok: number;
+          harga_modal: number;
+          harga_jual: number;
+        };
+        Update: {
+          barcode_id?: string;
+          nama_produk?: string;
+          kategori?: string;
+          stok?: number;
+          harga_modal?: number;
+          harga_jual?: number;
+        };
       };
       transactions: {
         Row: Transaction;
-        Insert: Omit<Transaction, 'id' | 'created_at'>;
-        Update: Partial<Omit<Transaction, 'id' | 'created_at'>>;
+        Insert: {
+          transaksi_id: string;
+          product_id?: string;
+          barcode_id: string;
+          nama_produk: string;
+          jumlah: number;
+          harga_satuan: number;
+          total_harga: number;
+          keuntungan: number;
+        };
+        Update: {
+          transaksi_id?: string;
+          product_id?: string;
+          barcode_id?: string;
+          nama_produk?: string;
+          jumlah?: number;
+          harga_satuan?: number;
+          total_harga?: number;
+          keuntungan?: number;
+        };
       };
     };
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      [_ in never]: never;
+    };
+    Enums: {
+      [_ in never]: never;
+    };
   };
-}
+};
 
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -50,13 +91,9 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
-// Helper function to call generate_transaction_id function
+// Helper function to generate transaction ID
 export async function generateTransactionId(): Promise<string> {
-  const { data, error } = await supabase.rpc('generate_transaction_id');
-  
-  if (error) {
-    console.error('Error generating transaction ID:', error);
-    // Fallback to manual generation
+  try {
     const { data: lastTrans } = await supabase
       .from('transactions')
       .select('transaksi_id')
@@ -68,7 +105,8 @@ export async function generateTransactionId(): Promise<string> {
     
     const lastNum = parseInt(lastTrans.transaksi_id.replace('TRX', ''));
     return `TRX${(lastNum + 1).toString().padStart(5, '0')}`;
+  } catch (error) {
+    // If no transactions exist, start with TRX00001
+    return 'TRX00001';
   }
-  
-  return data as string;
 }
