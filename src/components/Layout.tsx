@@ -1,8 +1,9 @@
+// src/components/Layout.tsx - Updated dengan Settings Menu
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Home, Package, Camera, FileText, LogOut, Menu, X, BarChart3 } from 'lucide-react';
+import { Home, Package, Camera, FileText, LogOut, Menu, X, BarChart3, Settings } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 const navItems = [
@@ -11,6 +12,7 @@ const navItems = [
   { href: '/scan', label: 'Scan', icon: Camera },
   { href: '/transactions', label: 'Transaksi', icon: FileText },
   { href: '/reports', label: 'Laporan', icon: BarChart3 },
+  { href: '/settings', label: 'Pengaturan', icon: Settings },
 ];
 
 export default function Layout({ children }: { children: React.ReactNode }) {
