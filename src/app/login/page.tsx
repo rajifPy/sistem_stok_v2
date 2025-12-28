@@ -39,7 +39,7 @@ export default function LoginPage() {
               🏪
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">Kantin POS</h1>
-            <p className="text-gray-600">Sistem Point of Sale Modern</p>
+            <p className="text-gray-600">Sat Set Anti Ribet</p>
           </div>
 
           {/* Form */}
