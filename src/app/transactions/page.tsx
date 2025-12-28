@@ -1,4 +1,4 @@
-// src/app/transactions/page.tsx - With Manual Input
+// src/app/transactions/page.tsx - WITH DISCOUNT SYSTEM
 'use client';
 
 import { useEffect, useState, Suspense } from 'react';
@@ -6,7 +6,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Layout from '@/components/Layout';
 import { printReceipt } from '@/components/PrintReceipt';
 import { formatCurrency, formatDateTime } from '@/lib/utils';
-import { ShoppingCart, Plus, Minus, Trash2, CheckCircle, Search, AlertCircle, Printer, ArrowLeft, Keyboard } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, Trash2, CheckCircle, Search, AlertCircle, Printer, Keyboard, Tag, Percent, DollarSign, X } from 'lucide-react';
 import type { Transaction } from '@/lib/db';
 
 interface CartItem {
@@ -16,6 +16,17 @@ interface CartItem {
   stok: number;
   kategori: string;
   quantity: number;
+  discount: {
+    type: 'percent' | 'nominal';
+    value: number;
+  };
+  discountedPrice: number;
+}
+
+interface GlobalDiscount {
+  type: 'percent' | 'nominal';
+  value: number;
+  code?: string;
 }
 
 function TransactionContent() {
@@ -30,11 +41,26 @@ function TransactionContent() {
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
   const [lastTransaction, setLastTransaction] = useState<any>(null);
+  
+  // Discount states
+  const [showDiscountModal, setShowDiscountModal] = useState(false);
+  const [discountTarget, setDiscountTarget] = useState<string | 'global' | null>(null);
+  const [discountType, setDiscountType] = useState<'percent' | 'nominal'>('percent');
+  const [discountValue, setDiscountValue] = useState<number>(0);
+  const [globalDiscount, setGlobalDiscount] = useState<GlobalDiscount | null>(null);
+  const [promoCode, setPromoCode] = useState('');
+
+  // Promo codes database
+  const promoCodes: Record<string, { type: 'percent' | 'nominal'; value: number; description: string }> = {
+    'DISKON10': { type: 'percent', value: 10, description: 'Diskon 10%' },
+    'DISKON20': { type: 'percent', value: 20, description: 'Diskon 20%' },
+    'HEMAT5K': { type: 'nominal', value: 5000, description: 'Potongan Rp 5.000' },
+    'HEMAT10K': { type: 'nominal', value: 10000, description: 'Potongan Rp 10.000' },
+  };
 
   useEffect(() => {
     fetchTransactions();
     
-    // Handle multiple products from multi-scan
     const multiParam = searchParams.get('multi');
     if (multiParam) {
       loadMultiProducts(multiParam);
@@ -62,7 +88,6 @@ function TransactionContent() {
         if (data.found && data.product) {
           const product = data.product;
           
-          // Check if already in temp cart
           const existingIndex = tempCart.findIndex(
             (p) => p.barcode_id === barcode_id
           );
@@ -77,6 +102,8 @@ function TransactionContent() {
               stok: product.stok,
               kategori: product.kategori,
               quantity: qty,
+              discount: { type: 'percent', value: 0 },
+              discountedPrice: product.harga_jual,
             });
           }
         }
@@ -96,6 +123,16 @@ function TransactionContent() {
       setTransactions(data);
     } catch (err) {
       console.error('Error fetching transactions:', err);
+    }
+  };
+
+  const calculateDiscountedPrice = (price: number, discount: { type: 'percent' | 'nominal'; value: number }) => {
+    if (discount.value === 0) return price;
+    
+    if (discount.type === 'percent') {
+      return price - (price * discount.value / 100);
+    } else {
+      return Math.max(0, price - discount.value);
     }
   };
 
@@ -149,6 +186,8 @@ function TransactionContent() {
             stok: data.product.stok,
             kategori: data.product.kategori,
             quantity: 1,
+            discount: { type: 'percent', value: 0 },
+            discountedPrice: data.product.harga_jual,
           }]);
           setSuccess(`✓ ${data.product.nama_produk} ditambahkan`);
         }
@@ -182,7 +221,7 @@ function TransactionContent() {
             const newQty = item.quantity + delta;
             
             if (newQty > item.stok) {
-              setError(`Stok ${item.nama_produk} tidak cukup. Tersedia: ${item.stok}`);
+              setError(`Stok ${item.nama_produk} tidak cukup (Max: ${item.stok})`);
               return item;
             }
             
@@ -200,6 +239,123 @@ function TransactionContent() {
     setError('');
   };
 
+  const openDiscountModal = (barcode_id: string | 'global') => {
+    setDiscountTarget(barcode_id);
+    
+    if (barcode_id === 'global') {
+      if (globalDiscount) {
+        setDiscountType(globalDiscount.type);
+        setDiscountValue(globalDiscount.value);
+      } else {
+        setDiscountType('percent');
+        setDiscountValue(0);
+      }
+    } else {
+      const item = cart.find(i => i.barcode_id === barcode_id);
+      if (item) {
+        setDiscountType(item.discount.type);
+        setDiscountValue(item.discount.value);
+      }
+    }
+    
+    setShowDiscountModal(true);
+  };
+
+  const applyDiscount = () => {
+    if (discountValue < 0) {
+      setError('Nilai diskon tidak valid');
+      return;
+    }
+
+    if (discountType === 'percent' && discountValue > 100) {
+      setError('Diskon maksimal 100%');
+      return;
+    }
+
+    if (discountTarget === 'global') {
+      setGlobalDiscount({
+        type: discountType,
+        value: discountValue,
+        code: promoCode || undefined,
+      });
+      setSuccess(`✓ Diskon ${discountType === 'percent' ? discountValue + '%' : formatCurrency(discountValue)} diterapkan!`);
+    } else if (discountTarget) {
+      setCart(cart.map(item => {
+        if (item.barcode_id === discountTarget) {
+          const discountedPrice = calculateDiscountedPrice(item.harga_jual, { type: discountType, value: discountValue });
+          return {
+            ...item,
+            discount: { type: discountType, value: discountValue },
+            discountedPrice,
+          };
+        }
+        return item;
+      }));
+      setSuccess(`✓ Diskon untuk produk diterapkan!`);
+    }
+
+    setTimeout(() => setSuccess(''), 2000);
+    closeDiscountModal();
+  };
+
+  const applyPromoCode = () => {
+    const code = promoCode.toUpperCase();
+    const promo = promoCodes[code];
+    
+    if (!promo) {
+      setError('Kode promo tidak valid!');
+      setTimeout(() => setError(''), 3000);
+      return;
+    }
+
+    setDiscountType(promo.type);
+    setDiscountValue(promo.value);
+    setSuccess(`✓ Kode promo "${code}" diterapkan: ${promo.description}`);
+    setTimeout(() => setSuccess(''), 3000);
+  };
+
+  const closeDiscountModal = () => {
+    setShowDiscountModal(false);
+    setDiscountTarget(null);
+    setDiscountType('percent');
+    setDiscountValue(0);
+    setPromoCode('');
+  };
+
+  const calculateTotals = () => {
+    let subtotal = 0;
+    let totalItemDiscount = 0;
+
+    cart.forEach(item => {
+      const itemTotal = item.harga_jual * item.quantity;
+      const itemDiscountedTotal = item.discountedPrice * item.quantity;
+      subtotal += itemTotal;
+      totalItemDiscount += (itemTotal - itemDiscountedTotal);
+    });
+
+    let afterItemDiscount = subtotal - totalItemDiscount;
+    let globalDiscountAmount = 0;
+
+    if (globalDiscount && globalDiscount.value > 0) {
+      if (globalDiscount.type === 'percent') {
+        globalDiscountAmount = afterItemDiscount * globalDiscount.value / 100;
+      } else {
+        globalDiscountAmount = Math.min(globalDiscount.value, afterItemDiscount);
+      }
+    }
+
+    const grandTotal = afterItemDiscount - globalDiscountAmount;
+
+    return {
+      subtotal,
+      totalItemDiscount,
+      afterItemDiscount,
+      globalDiscountAmount,
+      totalDiscount: totalItemDiscount + globalDiscountAmount,
+      grandTotal: Math.max(0, grandTotal),
+    };
+  };
+
   const handleCheckout = async () => {
     if (cart.length === 0) return;
 
@@ -209,7 +365,6 @@ function TransactionContent() {
     try {
       const completedTransactions = [];
 
-      // Process each item in cart
       for (const item of cart) {
         const res = await fetch('/api/transactions', {
           method: 'POST',
@@ -229,32 +384,37 @@ function TransactionContent() {
         completedTransactions.push(data);
       }
 
+      const totals = calculateTotals();
+
       setSuccess('Transaksi berhasil! 🎉');
       
-      // Check auto print settings
       const printSettings = localStorage.getItem('printSettings');
       const autoPrint = printSettings ? JSON.parse(printSettings).autoPrint : true;
 
-      // Auto print combined receipt
       if (autoPrint && completedTransactions.length > 0) {
         setPrinting(true);
         
-        // Create combined receipt
         const combinedReceipt = {
           transaksi_id: completedTransactions[0].transaksi_id,
-          items: completedTransactions.map(trans => ({
-            nama_produk: trans.nama_produk,
-            jumlah: trans.jumlah,
-            harga_satuan: trans.harga_satuan,
-            total_harga: trans.total_harga,
+          items: cart.map(item => ({
+            nama_produk: item.nama_produk,
+            jumlah: item.quantity,
+            harga_satuan: item.harga_jual,
+            discount: item.discount.value > 0 ? item.discount : undefined,
+            discounted_price: item.discountedPrice,
+            total_harga: item.discountedPrice * item.quantity,
           })),
-          total_harga: completedTransactions.reduce((sum, trans) => sum + trans.total_harga, 0),
+          subtotal: totals.subtotal,
+          total_item_discount: totals.totalItemDiscount,
+          global_discount: globalDiscount,
+          global_discount_amount: totals.globalDiscountAmount,
+          total_discount: totals.totalDiscount,
+          total_harga: totals.grandTotal,
           created_at: completedTransactions[0].created_at,
         };
 
         setTimeout(() => {
           printReceipt(combinedReceipt);
-          console.log('✅ Struk berhasil dicetak');
           setPrinting(false);
         }, 500);
 
@@ -262,6 +422,7 @@ function TransactionContent() {
       }
 
       setCart([]);
+      setGlobalDiscount(null);
       fetchTransactions();
       
       setTimeout(() => setSuccess(''), 3000);
@@ -283,7 +444,7 @@ function TransactionContent() {
     printReceipt(trans);
   };
 
-  const total = cart.reduce((sum, item) => sum + item.harga_jual * item.quantity, 0);
+  const totals = calculateTotals();
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
@@ -292,8 +453,8 @@ function TransactionContent() {
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Transaksi</h1>
-            <p className="text-gray-600">Input manual atau scan produk untuk transaksi</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Transaksi</h1>
+            <p className="text-sm sm:text-base text-gray-600">Input manual atau scan produk untuk transaksi</p>
           </div>
         </div>
 
@@ -306,12 +467,6 @@ function TransactionContent() {
               </div>
               <div>
                 <p className="text-green-900 font-bold text-lg">{success}</p>
-                <p className="text-green-700 text-sm">
-                  {lastTransaction && 'items' in lastTransaction 
-                    ? `${lastTransaction.items.length} produk • Total: ${formatCurrency(lastTransaction.total_harga)}`
-                    : 'Struk telah dicetak'
-                  }
-                </p>
               </div>
             </div>
             {lastTransaction && (
@@ -389,32 +544,7 @@ function TransactionContent() {
                     )}
                   </button>
                 </form>
-                <p className="mt-2 text-xs text-gray-500">
-                  💡 Tip: Ketik barcode lalu tekan Enter, atau gunakan barcode scanner keyboard
-                </p>
               </div>
-
-              {/* Cart Summary */}
-              {cart.length > 0 && (
-                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-xl">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-blue-900 font-semibold">
-                      {cart.length} produk • {totalItems} item
-                    </span>
-                    <button
-                      onClick={() => {
-                        if (confirm('Kosongkan keranjang?')) {
-                          setCart([]);
-                          setError('');
-                        }
-                      }}
-                      className="text-blue-600 hover:text-blue-800 font-medium"
-                    >
-                      Kosongkan
-                    </button>
-                  </div>
-                </div>
-              )}
 
               {/* Cart Items */}
               <div className="space-y-3 max-h-96 overflow-y-auto">
@@ -438,9 +568,20 @@ function TransactionContent() {
                             </span>
                             <p className="font-semibold text-gray-900">{item.nama_produk}</p>
                           </div>
-                          <p className="text-sm text-gray-600">
-                            {formatCurrency(item.harga_jual)} • Stok: {item.stok}
-                          </p>
+                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <span>{formatCurrency(item.harga_jual)}</span>
+                            {item.discount.value > 0 && (
+                              <>
+                                <span>→</span>
+                                <span className="font-bold text-green-600">
+                                  {formatCurrency(item.discountedPrice)}
+                                </span>
+                                <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-bold rounded">
+                                  -{item.discount.type === 'percent' ? `${item.discount.value}%` : formatCurrency(item.discount.value)}
+                                </span>
+                              </>
+                            )}
+                          </div>
                         </div>
                         <button
                           onClick={() => removeFromCart(item.barcode_id)}
@@ -450,6 +591,7 @@ function TransactionContent() {
                           <Trash2 size={18} />
                         </button>
                       </div>
+                      
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <button
@@ -466,9 +608,17 @@ function TransactionContent() {
                           >
                             <Plus size={16} />
                           </button>
+                          <button
+                            onClick={() => openDiscountModal(item.barcode_id)}
+                            className="ml-2 px-3 py-1.5 bg-orange-100 hover:bg-orange-200 text-orange-700 rounded-lg flex items-center gap-1.5 text-sm font-semibold transition-colors"
+                            title="Atur Diskon"
+                          >
+                            <Tag size={16} />
+                            Diskon
+                          </button>
                         </div>
                         <span className="font-bold text-blue-600">
-                          {formatCurrency(item.harga_jual * item.quantity)}
+                          {formatCurrency(item.discountedPrice * item.quantity)}
                         </span>
                       </div>
                     </div>
@@ -479,19 +629,58 @@ function TransactionContent() {
               {/* Checkout */}
               {cart.length > 0 && (
                 <div className="mt-6 pt-6 border-t border-gray-200">
-                  <div className="mb-4 space-y-2">
+                  {/* Summary */}
+                  <div className="mb-4 space-y-2 bg-gray-50 rounded-xl p-4">
                     <div className="flex justify-between text-sm text-gray-600">
-                      <span>Jumlah Produk:</span>
-                      <span className="font-semibold">{cart.length} jenis</span>
+                      <span>Subtotal ({totalItems} item):</span>
+                      <span className="font-semibold">{formatCurrency(totals.subtotal)}</span>
                     </div>
-                    <div className="flex justify-between text-sm text-gray-600">
-                      <span>Total Item:</span>
-                      <span className="font-semibold">{totalItems} pcs</span>
+                    
+                    {totals.totalItemDiscount > 0 && (
+                      <div className="flex justify-between text-sm text-green-600">
+                        <span>Diskon Item:</span>
+                        <span className="font-semibold">-{formatCurrency(totals.totalItemDiscount)}</span>
+                      </div>
+                    )}
+
+                    {globalDiscount && globalDiscount.value > 0 && (
+                      <div className="flex justify-between text-sm text-orange-600">
+                        <span>
+                          Diskon Total {globalDiscount.code && `(${globalDiscount.code})`}:
+                        </span>
+                        <span className="font-semibold">-{formatCurrency(totals.globalDiscountAmount)}</span>
+                      </div>
+                    )}
+
+                    {totals.totalDiscount > 0 && (
+                      <div className="flex justify-between text-sm font-bold text-green-600 pt-2 border-t border-gray-200">
+                        <span>Total Hemat:</span>
+                        <span>-{formatCurrency(totals.totalDiscount)}</span>
+                      </div>
+                    )}
+
+                    <div className="flex justify-between items-center pt-2 border-t-2 border-gray-300">
+                      <span className="text-lg font-semibold text-gray-900">TOTAL BAYAR:</span>
+                      <span className="text-2xl font-bold text-blue-600">{formatCurrency(totals.grandTotal)}</span>
                     </div>
-                    <div className="flex justify-between items-center pt-2 border-t border-gray-200">
-                      <span className="text-lg font-semibold text-gray-900">Total Bayar:</span>
-                      <span className="text-2xl font-bold text-blue-600">{formatCurrency(total)}</span>
-                    </div>
+                  </div>
+
+                  {/* Discount Buttons */}
+                  <div className="grid grid-cols-2 gap-2 mb-4">
+                    <button
+                      onClick={() => openDiscountModal('global')}
+                      className="px-4 py-2.5 bg-orange-100 hover:bg-orange-200 text-orange-700 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2"
+                    >
+                      <Percent size={18} />
+                      Diskon Total
+                    </button>
+                    <button
+                      onClick={() => setGlobalDiscount(null)}
+                      disabled={!globalDiscount}
+                      className="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed text-gray-700 rounded-xl font-semibold transition-colors"
+                    >
+                      Hapus Diskon
+                    </button>
                   </div>
                   
                   <button
@@ -565,6 +754,203 @@ function TransactionContent() {
             </div>
           </div>
         </div>
+
+        {/* Discount Modal */}
+        {showDiscountModal && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full animate-scale-in">
+              <div className="bg-gradient-to-r from-orange-600 to-red-600 p-6 text-white rounded-t-2xl">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-bold flex items-center gap-2">
+                    <Tag size={24} />
+                    {discountTarget === 'global' ? 'Diskon Total Transaksi' : 'Diskon Item'}
+                  </h3>
+                  <button
+                    onClick={closeDiscountModal}
+                    className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                  >
+                    <X size={24} />
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-6 space-y-4">
+                {/* Promo Code (only for global discount) */}
+                {discountTarget === 'global' && (
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Kode Promo
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={promoCode}
+                        onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                        placeholder="DISKON10"
+                        className="flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent font-mono uppercase"
+                      />
+                      <button
+                        onClick={applyPromoCode}
+                        className="px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold transition-colors"
+                      >
+                        Terapkan
+                      </button>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Contoh: DISKON10, DISKON20, HEMAT5K, HEMAT10K
+                    </p>
+                  </div>
+                )}
+
+                {/* Discount Type */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Tipe Diskon
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => setDiscountType('percent')}
+                      className={`px-4 py-3 rounded-xl font-semibold transition-all ${
+                        discountType === 'percent'
+                          ? 'bg-orange-600 text-white shadow-lg'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      <Percent size={18} className="inline mr-2" />
+                      Persen (%)
+                    </button>
+                    <button
+                      onClick={() => setDiscountType('nominal')}
+                      className={`px-4 py-3 rounded-xl font-semibold transition-all ${
+                        discountType === 'nominal'
+                          ? 'bg-orange-600 text-white shadow-lg'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      <DollarSign size={18} className="inline mr-2" />
+                      Nominal (Rp)
+                    </button>
+                  </div>
+                </div>
+
+                {/* Discount Value */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Nilai Diskon
+                  </label>
+                  <input
+                    type="number"
+                    value={discountValue}
+                    onChange={(e) => setDiscountValue(parseFloat(e.target.value) || 0)}
+                    placeholder={discountType === 'percent' ? '0-100' : '0'}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-center text-2xl font-bold"
+                    min="0"
+                    max={discountType === 'percent' ? 100 : undefined}
+                  />
+                  <p className="text-xs text-gray-500 mt-2 text-center">
+                    {discountType === 'percent' 
+                      ? 'Maksimal 100%' 
+                      : 'Masukkan nominal dalam Rupiah'
+                    }
+                  </p>
+                </div>
+
+                {/* Quick Preset Buttons */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Quick Preset
+                  </label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {discountType === 'percent' ? (
+                      <>
+                        <button
+                          onClick={() => setDiscountValue(5)}
+                          className="px-3 py-2 bg-orange-100 hover:bg-orange-200 text-orange-700 rounded-lg font-semibold transition-colors"
+                        >
+                          5%
+                        </button>
+                        <button
+                          onClick={() => setDiscountValue(10)}
+                          className="px-3 py-2 bg-orange-100 hover:bg-orange-200 text-orange-700 rounded-lg font-semibold transition-colors"
+                        >
+                          10%
+                        </button>
+                        <button
+                          onClick={() => setDiscountValue(15)}
+                          className="px-3 py-2 bg-orange-100 hover:bg-orange-200 text-orange-700 rounded-lg font-semibold transition-colors"
+                        >
+                          15%
+                        </button>
+                        <button
+                          onClick={() => setDiscountValue(20)}
+                          className="px-3 py-2 bg-orange-100 hover:bg-orange-200 text-orange-700 rounded-lg font-semibold transition-colors"
+                        >
+                          20%
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => setDiscountValue(1000)}
+                          className="px-3 py-2 bg-orange-100 hover:bg-orange-200 text-orange-700 rounded-lg font-semibold transition-colors text-xs"
+                        >
+                          1K
+                        </button>
+                        <button
+                          onClick={() => setDiscountValue(5000)}
+                          className="px-3 py-2 bg-orange-100 hover:bg-orange-200 text-orange-700 rounded-lg font-semibold transition-colors text-xs"
+                        >
+                          5K
+                        </button>
+                        <button
+                          onClick={() => setDiscountValue(10000)}
+                          className="px-3 py-2 bg-orange-100 hover:bg-orange-200 text-orange-700 rounded-lg font-semibold transition-colors text-xs"
+                        >
+                          10K
+                        </button>
+                        <button
+                          onClick={() => setDiscountValue(20000)}
+                          className="px-3 py-2 bg-orange-100 hover:bg-orange-200 text-orange-700 rounded-lg font-semibold transition-colors text-xs"
+                        >
+                          20K
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Preview */}
+                {discountValue > 0 && (
+                  <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                    <p className="text-sm text-green-900 font-semibold mb-1">Preview Diskon:</p>
+                    <p className="text-2xl font-bold text-green-600">
+                      {discountType === 'percent' 
+                        ? `-${discountValue}%`
+                        : `-${formatCurrency(discountValue)}`
+                      }
+                    </p>
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="flex gap-3 pt-4">
+                  <button
+                    onClick={closeDiscountModal}
+                    className="flex-1 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold transition-colors"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    onClick={applyDiscount}
+                    className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-600 to-red-600 hover:shadow-lg text-white rounded-xl font-semibold transition-all"
+                  >
+                    Terapkan
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </Layout>
   );
