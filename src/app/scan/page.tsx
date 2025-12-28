@@ -111,67 +111,6 @@ export default function ScanPage() {
                 </div>
               </div>
             </div>
-
-            {/* Benefits */}
-            <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-xl border border-emerald-200 p-6">
-              <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <Zap className="text-emerald-600" size={24} />
-                Keunggulan Multi-Scan:
-              </h4>
-              <ul className="space-y-3 text-sm text-gray-700">
-                <li className="flex items-start gap-3">
-                  <span className="w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold">✓</span>
-                  <span><strong>Scan Tanpa Henti</strong> - Scan beberapa produk berturut-turut tanpa perlu berhenti</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold">✓</span>
-                  <span><strong>Edit Fleksibel</strong> - Ubah jumlah produk sebelum checkout</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold">✓</span>
-                  <span><strong>Total Real-time</strong> - Lihat total belanja secara langsung</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold">✓</span>
-                  <span><strong>Proses Cepat</strong> - Transaksi lebih cepat dan efisien</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold">✓</span>
-                  <span><strong>Auto Save</strong> - Keranjang tersimpan otomatis</span>
-                </li>
-              </ul>
-            </div>
-
-            {/* Tips */}
-            <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-xl border border-yellow-200 p-6">
-              <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <Target className="text-orange-600" size={24} />
-                Tips Scan Cepat & Akurat:
-              </h4>
-              <ul className="space-y-2 text-sm text-gray-700">
-                <li className="flex items-start gap-2">
-                  <span className="text-orange-600 flex-shrink-0">💡</span>
-                  <span>Pastikan pencahayaan <strong>cukup terang</strong></span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-orange-600 flex-shrink-0">💡</span>
-                  <span>Jarak ideal: <strong>10-20cm</strong> dari barcode</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-orange-600 flex-shrink-0">💡</span>
-                  <span>Pegang kamera <strong>steady</strong> (tidak goyang)</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-orange-600 flex-shrink-0">💡</span>
-                  <span>Barcode harus <strong>terlihat jelas</strong> di kotak scan</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-orange-600 flex-shrink-0">💡</span>
-                  <span>Tunggu <strong>notifikasi sukses</strong> sebelum scan berikutnya</span>
-                </li>
-              </ul>
-            </div>
-
             {/* Quick Actions */}
             <div className="bg-white rounded-xl border border-gray-200 p-6">
               <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
@@ -210,21 +149,6 @@ export default function ScanPage() {
                   </div>
                 </button>
               </div>
-            </div>
-
-            {/* Browser Requirement */}
-            <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
-              <h4 className="font-bold text-purple-900 mb-2 flex items-center gap-2 text-sm">
-                <span>🌐</span>
-                Persyaratan Browser:
-              </h4>
-              <ul className="text-xs text-purple-800 space-y-1">
-                <li>✓ Chrome / Edge (Recommended)</li>
-                <li>✓ Firefox</li>
-                <li>✓ Safari (dengan limitasi)</li>
-                <li>✓ Harus menggunakan HTTPS</li>
-                <li>✓ Izinkan akses kamera</li>
-              </ul>
             </div>
           </div>
         </div>
