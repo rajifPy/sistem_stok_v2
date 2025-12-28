@@ -4,6 +4,7 @@
 import { useRouter } from 'next/navigation';
 import Layout from '@/components/Layout';
 import Scanner from '@/components/Scanner';
+import CameraPermissionHelper from '@/components/CameraPermissionHelper';
 import { ShoppingCart, Camera, Zap } from 'lucide-react';
 
 interface ScannedProduct {
@@ -145,6 +146,9 @@ export default function ScanPage() {
                 </button>
               </div>
             </div>
+
+            {/* Camera Permission Helper */}
+            <CameraPermissionHelper />
           </div>
         </div>
       </div>
