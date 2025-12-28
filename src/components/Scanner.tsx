@@ -45,17 +45,46 @@ export default function Scanner({ multiScan = false, onCheckout }: ScannerProps)
         aspectRatio: 1.0,
       };
 
-      await html5QrCode.start(
-        { facingMode: 'environment' },
-        config,
-        handleScanSuccess,
-        () => {} // Ignore scan errors
-      );
+      try {
+        // Try rear camera first
+        await html5QrCode.start(
+          { facingMode: 'environment' },
+          config,
+          handleScanSuccess,
+          () => {} // Ignore scan errors
+        );
+      } catch (err) {
+        console.log('Rear camera failed, trying front camera...');
+        // Fallback to front camera
+        await html5QrCode.start(
+          { facingMode: 'user' },
+          config,
+          handleScanSuccess,
+          () => {} // Ignore scan errors
+        );
+      }
 
       setScanning(true);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Scanner error:', err);
-      setError('Gagal mengakses kamera. Pastikan izin kamera sudah diberikan.');
+      
+      let errorMessage = 'Gagal mengakses kamera. ';
+      
+      if (err.name === 'NotAllowedError') {
+        errorMessage += 'Izin kamera ditolak. Silakan izinkan akses kamera di pengaturan browser Anda.';
+      } else if (err.name === 'NotFoundError') {
+        errorMessage += 'Kamera tidak ditemukan. Pastikan perangkat memiliki kamera.';
+      } else if (err.name === 'NotReadableError') {
+        errorMessage += 'Kamera sedang digunakan aplikasi lain. Tutup aplikasi lain dan coba lagi.';
+      } else if (err.name === 'OverconstrainedError') {
+        errorMessage += 'Kamera tidak mendukung pengaturan yang diminta.';
+      } else if (err.name === 'SecurityError') {
+        errorMessage += 'Akses kamera diblokir karena alasan keamanan. Pastikan menggunakan HTTPS.';
+      } else {
+        errorMessage += 'Coba refresh halaman atau gunakan browser lain.';
+      }
+      
+      setError(errorMessage);
     }
   };
 
@@ -227,6 +256,19 @@ export default function Scanner({ multiScan = false, onCheckout }: ScannerProps)
               <Camera size={20} />
               Mulai Scan
             </button>
+            
+            {error && (
+              <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-left">
+                <h4 className="font-bold text-yellow-900 mb-2">💡 Cara Mengatasi:</h4>
+                <ol className="text-sm text-yellow-800 space-y-1 list-decimal list-inside">
+                  <li>Pastikan browser memiliki izin akses kamera</li>
+                  <li>Coba refresh halaman (F5 atau Ctrl+R)</li>
+                  <li>Tutup aplikasi lain yang menggunakan kamera</li>
+                  <li>Coba browser lain (Chrome/Firefox recommended)</li>
+                  <li>Pastikan menggunakan HTTPS (bukan HTTP)</li>
+                </ol>
+              </div>
+            )}
           </div>
         ) : (
           <div>
