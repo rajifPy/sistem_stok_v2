@@ -76,39 +76,6 @@ export default function ScanPage() {
                 <p className="text-gray-600 mb-6 text-sm sm:text-base">
                   Scan beberapa produk sekaligus lalu checkout untuk proses transaksi
                 </p>
-
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 sm:p-6 text-left border border-blue-200">
-                  <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                    <span className="text-xl">📱</span>
-                    Cara Menggunakan:
-                  </h4>
-                  <ol className="space-y-2 text-sm text-gray-700">
-                    <li className="flex items-start gap-2">
-                      <span className="text-blue-600 font-bold flex-shrink-0">1.</span>
-                      <span>Klik tombol <strong>"Mulai Scan"</strong> untuk mengaktifkan kamera</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-blue-600 font-bold flex-shrink-0">2.</span>
-                      <span>Arahkan kamera ke barcode produk pertama</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-blue-600 font-bold flex-shrink-0">3.</span>
-                      <span>Produk akan otomatis ditambahkan ke keranjang</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-blue-600 font-bold flex-shrink-0">4.</span>
-                      <span>Lanjutkan scan produk lain tanpa henti</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-blue-600 font-bold flex-shrink-0">5.</span>
-                      <span>Edit jumlah produk jika diperlukan</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-blue-600 font-bold flex-shrink-0">6.</span>
-                      <span>Klik <strong>"Checkout"</strong> untuk proses transaksi</span>
-                    </li>
-                  </ol>
-                </div>
               </div>
             </div>
             {/* Quick Actions */}
