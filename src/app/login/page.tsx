@@ -129,7 +129,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <p className="text-center text-gray-600 text-sm mt-6">
-          © 2024 Kantin POS. All rights reserved.
+          © Kantin POS. By rajifPy
         </p>
       </div>
     </div>
