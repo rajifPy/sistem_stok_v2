@@ -25,7 +25,8 @@
     "recharts": "^2.12.7",
     "lucide-react": "^0.447.0",
     "clsx": "^2.1.1",
-    "qrcode": "^1.5.3"
+    "qrcode": "^1.5.3",
+    "html5-qrcode": "^2.3.8"
   },
   "devDependencies": {
     "@types/node": "^20.14.9",
